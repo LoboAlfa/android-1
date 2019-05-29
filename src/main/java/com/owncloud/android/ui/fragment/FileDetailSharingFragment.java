@@ -25,6 +25,7 @@ import android.accounts.AccountManager;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.PorterDuff;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -42,9 +43,9 @@ import com.google.android.material.snackbar.Snackbar;
 import com.nextcloud.client.account.UserAccountManager;
 import com.nextcloud.client.di.Injectable;
 import com.owncloud.android.R;
-import com.owncloud.android.authentication.AccountUtils;
 import com.owncloud.android.datamodel.FileDataStorageManager;
 import com.owncloud.android.datamodel.OCFile;
+import com.owncloud.android.lib.common.accounts.AccountUtils;
 import com.owncloud.android.lib.common.operations.RemoteOperationResult;
 import com.owncloud.android.lib.resources.shares.OCShare;
 import com.owncloud.android.lib.resources.shares.SharePermissionsBuilder;
@@ -136,6 +137,9 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
     @BindView(R.id.shared_with_you_note)
     TextView sharedWithYouNote;
 
+    @BindView(R.id.copy_internal_link_icon)
+    ImageView internalLinkIcon;
+
     @Inject UserAccountManager accountManager;
 
     public static FileDetailSharingFragment newInstance(OCFile file, Account account) {
@@ -199,6 +203,14 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
         }
 
         setupView();
+
+        // todo extract
+        internalLinkIcon.getBackground().setColorFilter(getResources().getColor(R.color.grey_db),
+                                                        PorterDuff.Mode.SRC_IN);
+        internalLinkIcon.getDrawable().mutate().setColorFilter(getResources().getColor(R.color.black),
+                                                               PorterDuff.Mode.SRC_IN);
+
+
 
         return view;
     }
@@ -322,6 +334,16 @@ public class FileDetailSharingFragment extends Fragment implements UserListAdapt
             createShareLink();
         } else {
             fileOperationsHelper.unshareFileViaLink(file);
+        }
+    }
+
+    @OnClick(R.id.copy_internal_container)
+    public void copyInternalLink() {
+        try {
+            String baseUrl = AccountUtils.getBaseUrlForAccount(requireContext(), account);
+            DisplayUtils.showSnackMessage(getView(), baseUrl + OCFile.PATH_SEPARATOR + file.getLocalId());
+        } catch (AccountUtils.AccountNotFoundException e) {
+            DisplayUtils.showSnackMessage(getView(), getString(R.string.could_not_retrieve_url));
         }
     }
 
